@@ -1,0 +1,24 @@
+<header class="header" id="header">
+  <nav class="navbar container">
+     <div class="logo">
+        <img src="assets/images/logo.png" alt="">
+     </div>
+
+     <div class="burger" id="burger">
+        <span class="burger-line"></span>
+        <span class="burger-line"></span>
+        <span class="burger-line"></span>
+     </div>
+     <div class="menu" id="menu">
+        <ul class="menu-inner">
+           <li class="menu-item"><a routerLink="/home/{{param1}}/{{param2}}" class="menu-link">Traking Project</a></li>
+           <li class="menu-item"><a routerLink="/multimedia/{{param1}}/{{param2}}" class="menu-link">Multimedia</a></li>
+           <li class="menu-item"><a routerLink="/referrals/{{param1}}/{{param2}}" class="menu-link">Referrals</a></li>
+        </ul>
+     </div>
+     <button class="switch" id="switch">
+        <i class="switch-light bx bx-sun"></i>
+        <i class="switch-dark bx bx-moon"></i>
+     </button>
+  </nav>
+</header>
