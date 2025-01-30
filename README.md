@@ -1,6 +1,3 @@
-# Salvia-kit Dashboard v1 Angular
-
-![Salvia-kit Dashboard v1](https://www.salvia-kit.com/images/dashboards/dashv1.png)
 
 
 ## 📋 Documentation
