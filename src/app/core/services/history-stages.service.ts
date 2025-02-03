@@ -12,6 +12,9 @@ import { BehaviorSubject } from 'rxjs';
 export class HistoryStagesService {
   private parametrosSubject = new BehaviorSubject<{ [key: string]: any }>({});
   parametros$ = this.parametrosSubject.asObservable();
+
+  private optionValueSource = new BehaviorSubject<string>('Home'); 
+  optionValue$ = this.optionValueSource.asObservable();
   constructor(
     private http:HttpClient,
     private router:Router,
@@ -34,5 +37,9 @@ export class HistoryStagesService {
 
   getParametros() {
     return this.parametrosSubject.getValue();
+  }
+
+  setOptionValue(value: string) {
+    this.optionValueSource.next(value);
   }
 }

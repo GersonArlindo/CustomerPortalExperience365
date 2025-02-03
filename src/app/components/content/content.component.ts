@@ -4,6 +4,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HistoryStagesService } from 'src/app/core/services/history-stages.service';
 import Swal from 'sweetalert2';
+import { finalize, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-content',
@@ -12,24 +13,25 @@ import Swal from 'sweetalert2';
 })
 export class ContentComponent implements OnInit{
   @Input() title: string;
-  @Input() optionValue: string;
+  //@Input() optionValue: string;
   @ViewChild('fileInput') fileInput!: ElementRef;
   files: File[] = [];
   myProgressTracker: any
   appt_id: any
   tenant_id: any
-  subTitle: string = ''
+  subTitle: string = 'Loading...';
   formRefer!: FormGroup
   emailPattern = "^[a-z0-9._%+-]+@[a-z0-9.-]+.[a-z]{2,4}$";
   type: string = "Horizontally"
-  updateYear: number = 0
+  updateYear: number = new Date().getFullYear();
+  optionValue: string = 'Home';
   constructor(
     private historyStagesSrv: HistoryStagesService,
     private route: ActivatedRoute,
     private formBuilder: FormBuilder,
     private http: HttpClient
   ) {
-    this.optionValue = '';
+    //this.optionValue = '';
     this.title = '';
     this.formRefer = formBuilder.group({
       firstName: ['', Validators.required],
@@ -43,10 +45,44 @@ export class ContentComponent implements OnInit{
   ngOnInit(): void {
     this.appt_id = this.route.snapshot.paramMap.get('appt_id') || '';
     this.tenant_id = this.route.snapshot.paramMap.get('tenant_id') || '';
-    this.getMyProgressTracker(this.appt_id, this.tenant_id);
-    const copyright=new Date();
-    this.updateYear=copyright.getFullYear();
-    console.log(this.optionValue);
+    this.loadProgressTracker();
+    this.historyStagesSrv.optionValue$.subscribe(value => {
+      this.optionValue = value;
+    });
+  }
+
+  private loadProgressTracker(): void {
+    this.historyStagesSrv.getHistoryStage(this.appt_id, this.tenant_id)
+      .pipe(
+        tap(data => this.filterCanceledStages(data)),  // Elimina los stages "Canceled"
+        tap(data => this.myProgressTracker = data),    // Asigna los datos
+        finalize(() => this.updateSubTitle())          // Actualiza el título
+      )
+      .subscribe();
+      console.log("Llamado al servicio")
+  }
+
+  private filterCanceledStages(data: any): void {
+    if (data?.tbl_history_stages) {
+      data.tbl_history_stages = data.tbl_history_stages.filter(
+        (stage: any) => stage.tbl_stage?.stage_name !== 'Canceled'
+      );
+    }
+  }
+
+  private updateSubTitle(): void {
+    if (this.myProgressTracker?.contact) {
+      const { firstName, lastName } = this.myProgressTracker.contact;
+      this.subTitle = `Welcome ${firstName} ${lastName}`;
+      // Setear parámetros después de actualizar el título
+      const param1 = this.appt_id;
+      const param2 = this.tenant_id;
+      const param3 = `${firstName} ${lastName}`;
+
+      this.historyStagesSrv.setParametros({ param1, param2, param3 });
+    } else {
+      this.subTitle = 'No data available';
+    }
   }
 
   // Manejador de eventos para el dragover
@@ -105,27 +141,39 @@ export class ContentComponent implements OnInit{
     removeFileAtIndex(0);
   }
 
-  getMyProgressTracker(appt_id: any, tenant_id: any){
-    const storageKey = `progressTracker_${appt_id}`;
-    const storedData = localStorage.getItem(storageKey);
-    if (storedData) {
-      this.myProgressTracker = JSON.parse(storedData);
-      // console.log('Data loaded from localStorage:', this.myProgressTracker);
-    } else {
-      this.historyStagesSrv.getHistoryStage(appt_id, tenant_id).subscribe((data: any) => {
-        this.myProgressTracker = data;
-        localStorage.setItem(storageKey, JSON.stringify(data));
-      });
-    }
-    const param1 = this.route.snapshot.paramMap.get('appt_id') || '';
-    const param2 = this.route.snapshot.paramMap.get('tenant_id') || '';
-    const param3 = this.myProgressTracker?.contact?.firstName + ' ' + this.myProgressTracker?.contact?.lastName
+  // getMyProgressTracker(appt_id: any, tenant_id: any){
+  //   //const storageKey = `progressTracker_${appt_id}`;
+  //   //const storedData = localStorage.getItem(storageKey);
+  //   // if (storedData) {
+  //   //   this.myProgressTracker = JSON.parse(storedData);
+  //   //   this.updateSubTitle();
+  //   // } else {
+  //   this.historyStagesSrv.getHistoryStage(appt_id, tenant_id).subscribe((data: any) => {
+  //     if (data) {
+  //       data.tbl_history_stages = data.tbl_history_stages.filter(
+  //         (stage: any) => stage.tbl_stage?.stage_name !== 'Canceled'
+  //       );
+  //     }
+      
+  //     this.myProgressTracker = data;
+  //     // localStorage.setItem(storageKey, JSON.stringify(data));
+  //     this.updateSubTitle();
+  //   });
+  //  // }
+  //   const param1 = this.route.snapshot.paramMap.get('appt_id') || '';
+  //   const param2 = this.route.snapshot.paramMap.get('tenant_id') || '';
+  //   const param3 = this.myProgressTracker?.contact?.firstName + ' ' + this.myProgressTracker?.contact?.lastName
     
-    this.historyStagesSrv.setParametros({ param1, param2, param3 });
+  //   this.historyStagesSrv.setParametros({ param1, param2, param3 });
+  // }
 
-    this.subTitle = `Welcome ${this.myProgressTracker?.contact?.firstName + ' ' + this.myProgressTracker?.contact?.lastName}`;
-
-  }
+  // updateSubTitle() {
+  //   if (this.myProgressTracker?.contact) {
+  //     this.subTitle = `Welcome ${this.myProgressTracker.contact.firstName} ${this.myProgressTracker.contact.lastName}`;
+  //   } else {
+  //     this.subTitle = 'Loading...';
+  //   }
+  // }
 
   formatDate(dateString: string | null | undefined): string {
     if (!dateString) {

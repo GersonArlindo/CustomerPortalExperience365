@@ -783,7 +783,7 @@ video {
     background-color: #007EA7;
   }
 
-  svg {
+  :is(svg){
     width: 16px;
     height: 16px;
     object-fit: contain;

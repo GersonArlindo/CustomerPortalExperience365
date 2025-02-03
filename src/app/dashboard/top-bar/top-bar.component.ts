@@ -19,6 +19,10 @@ export class TopBarComponent implements OnInit  {
   ngOnInit(): void {
     this.imprimir()
   }
+
+  setOption(option: string) {
+    this.historyStagesSrv.setOptionValue(option);
+  }
    
   imprimir(){
     // Esperar a que los parámetros estén cargados
@@ -39,6 +43,4 @@ export class TopBarComponent implements OnInit  {
     this.dashboard.openSidebar()
     
   }
-  
-
 }
